@@ -1,0 +1,44 @@
+{
+  "name": "canvas-charts",
+  "version": "1.0.0",
+  "description": "A JavaScript canvas vanilla charts implementation.",
+  "main": "./dist/index.html",
+  "scripts": {
+    "build": "webpack --config webpack.production.js",
+    "start": "webpack serve --config webpack.watch.js",
+    "lint": "eslint src",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shevchenkobn/canvas-charts.git"
+  },
+  "keywords": [
+    "canvas",
+    "charts",
+    "browser"
+  ],
+  "author": "Bohdan Shevchenko",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/shevchenkobn/canvas-charts/issues"
+  },
+  "homepage": "https://github.com/shevchenkobn/canvas-charts#readme",
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "eslint": "^8.0.1",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "html-webpack-plugin": "^5.4.0",
+    "prettier": "^2.4.1",
+    "react-dev-utils": "^6.0.5",
+    "readonly-date": "^1.0.0",
+    "remove-files-webpack-plugin": "^1.4.5",
+    "ts-loader": "^9.2.6",
+    "typescript": "^4.4.4",
+    "webpack": "^5.58.2",
+    "webpack-cli": "^4.9.0",
+    "webpack-dev-server": "^4.3.1"
+  }
+}
