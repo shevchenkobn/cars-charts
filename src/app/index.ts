@@ -1,3 +1,4 @@
+import './polyfills';
 import { CanvasChart } from './charts';
 import { CsvHtmlDataLoader } from './data-source/csv-data-loader.class';
 import { DataReader } from './data-source/data-reader.class';
@@ -92,9 +93,9 @@ async function main() {
   uiController.init().handleLoad();
 }
 
-main().catch((error) => {
-  console.error('FATAL:', error);
-});
+// main().catch((error) => {
+//   console.error('FATAL:', error);
+// });
 
 function toCsvId(csvNumber: CsvNumber) {
   return csvNumber + 'Csv';
