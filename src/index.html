@@ -5,20 +5,34 @@
   <title>Cars Charts</title>
 </head>
 <body>
-<!--  <fieldset>-->
-<!--    <legend>Data Selector:</legend>-->
-<!--    <div class="col">-->
-<!--      <input type="radio" class="app-ui-selector" id="radioData1Csv" name="radioDataCsv" value="data1">-->
-<!--      <label for="radioData1Csv">data1.csv</label><br>-->
-<!--      <input type="radio" class="app-ui-selector" id="radioData2Csv" name="radioDataCsv" value="data2">-->
-<!--      <label for="radioData2Csv">data2.csv</label><br>-->
-<!--    </div>-->
+  <div class="section ph-1">
+    <h4>Data Selector:</h4>
+    <div>
+      <div>
+        <label for="radioXAxisPrices">
+          <input type="radio" class="app-ui-selector" id="radioXAxisPrices" name="radioXAxis" value="prices">
+          <span>Prices</span>
+        </label>
+      </div>
+
+      <div>
+        <label for="radioXAxisManufacturers">
+          <input type="radio" class="app-ui-selector" id="radioXAxisManufacturers" name="radioXAxis" value="manufacturers">
+          <span>Manufacturers</span>
+        </label>
+      </div>
+    </div>
+    <div class="section">
+      <div class="divider mb-1"></div>
+      <a class="waves-effect waves-light btn app-ui-render">Render</a>
+      <div><small>This button also resizes the charts for current window screen and browser zoom.</small></div>
+    </div>
 <!--    <div class="col">-->
 <!--      <input type="checkbox" id="refreshDataCsv" class="app-ui-refresh"/>-->
 <!--      <label for="refreshDataCsv">Reload from server</label><br>-->
 <!--      <button class="app-ui-load">Load</button>-->
 <!--    </div>-->
-<!--  </fieldset>-->
-  <canvas class="chart"></canvas>
+  </div>
+  <div class="app-chart"></div>
 </body>
 </html>

@@ -1,3 +1,6 @@
+import { GuardedMap, ReadonlyGuardedMap } from '../lib/map';
+import { DeepReadonlyGuardedMap, t } from '../lib/types';
+
 export interface DataLoader<T> {
   load(): Promise<T[]>;
   refresh(): Promise<T[]>;
@@ -33,6 +36,16 @@ export enum CarManufacturer {
   Volvo = 'volvo',
 }
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
+export namespace carManufacturerMap {
+  export const value: ReadonlyArray<CarManufacturer> =
+    Object.values(CarManufacturer);
+  export const index: ReadonlyGuardedMap<CarManufacturer, number> = new GuardedMap(value.map((v, i) => t(v, i)));
+  export function getIndex(value: CarManufacturer) {
+    return index.get(value);
+  }
+}
+
 export enum CarCylinderCount {
   Two = 2,
   Three = 3,
@@ -45,7 +58,7 @@ export enum CarCylinderCount {
 
 export interface CarModel {
   price: number;
-  make: CarManufacturer;
+  manufacturer: CarManufacturer;
   fuelType: CarFuelType;
   cylinderCount: CarCylinderCount;
   horsepower: number;

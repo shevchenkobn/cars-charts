@@ -4,7 +4,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { tempBundleName, nodeMajorVersion } = require('./webpack.consts');
 
 module.exports = {
-  entry: ['./src/app/index.ts', './src/styles/index.scss'],
+  entry: ['./src/app/index.bkp.ts', './src/styles/index.scss'],
   devtool: 'inline-source-map',
   mode: 'production',
   module: {
