@@ -3,8 +3,10 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const { tempBundleName, nodeMajorVersion } = require('./webpack.consts');
 
+const cssExt = '\\.(s[ac]|ic)ss$'
+
 module.exports = {
-  entry: ['./src/app/index.bkp.ts', './src/styles/index.scss'],
+  entry: ['./src/app/index.ts', './src/styles/index.scss'],
   devtool: 'inline-source-map',
   mode: 'production',
   module: {
@@ -19,10 +21,19 @@ module.exports = {
         use: 'raw-loader'
       },
       {
-        test: /\.s[ac]ss$/i,
+        test: new RegExp(cssExt, 'i'),
         use: [
           'style-loader',
-          'css-loader',
+          {
+            loader: 'css-loader',
+            options: {
+              modules: {
+                auto: new RegExp('module' + cssExt, 'i'),
+                mode: 'icss',
+                localIdentName: '[local]',
+              }
+            },
+          },
           {
             loader: 'sass-loader',
             options: {

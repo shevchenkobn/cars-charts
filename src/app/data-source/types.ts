@@ -57,6 +57,7 @@ export enum CarCylinderCount {
 }
 
 export interface CarModel {
+  id: number;
   price: number;
   manufacturer: CarManufacturer;
   fuelType: CarFuelType;

@@ -6,7 +6,8 @@ export async function loadCarsData(): Promise<CarModel[]> {
   const parsed = Papa.parse(dataCsv, {
     header: true,
   });
-  return parsed.data.map((r: any) => ({
+  return parsed.data.map((r: any, i) => ({
+    id: i,
     price: Number.parseInt(r.price),
     manufacturer: r.make,
     fuelType: r['fuel-type'],

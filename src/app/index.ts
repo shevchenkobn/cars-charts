@@ -1,5 +1,5 @@
 import { CarsSvgCharts } from './charts';
-import { CanvasChart } from './charts/index.bkp';
+// import { CanvasChart } from './charts/index.bkp';
 import { ChartsXAxisType } from './charts/types';
 import { loadCarsData } from './data-source';
 import { CsvHtmlDataLoader } from './data-source/csv-data-loader.class';
@@ -25,9 +25,9 @@ async function main() {
     xAxisType: ChartsXAxisType.Prices,
   });
   charts.render(sourceData);
-  setInterval(() => {
-    charts.render();
-  }, 1000);
+  // setInterval(() => {
+  //   charts.render();
+  // }, 1000);
   // const firstCsvElement = document.getElementById(toCsvId(CsvNumber.First));
   // const secondCsvElement = document.getElementById(toCsvId(CsvNumber.Second));
   // if (!firstCsvElement || !secondCsvElement) {
