@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import { Subject, takeUntil } from 'rxjs';
-import { ReadonlySelectableDataSource } from '../data-source/data-source.class';
+import { ReadonlyInteractiveDataSource } from '../data-source/data-source.class';
 import {
   CarManufacturer,
   carManufacturerMap,
@@ -65,7 +65,7 @@ export class CarsSvgCharts {
   private coloredProperty: ColorCodedProperty = 'cylinderCount';
   private size: Coordinates = { x: 0, y: 0 };
   private limits: CarLimits = getCarLimits();
-  private data: ReadonlySelectableDataSource;
+  private data: ReadonlyInteractiveDataSource;
   private readonly destroy$ = new Subject<boolean>();
 
   constructor(config: ChartsConfig) {
@@ -94,6 +94,53 @@ export class CarsSvgCharts {
     this.data.changed$.pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.render();
     });
+    this.data.selected$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(({ carId, selected }) => {
+        const points = this.svg.selectAll(`[${idAttributeName}="${carId}"]`);
+        if (selected) {
+          points.each(function () {
+            d3.select(this)
+              .attr('stroke', '#000')
+              .attr('stroke-width', selectedStrokeWidthPx)
+              .raise();
+          });
+        } else {
+          points.each(function () {
+            d3.select(this).attr('stroke', null).attr('stroke-width', null);
+          });
+        }
+      });
+    this.data.current$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(({ oldCarId, newCarId }) => {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        const self = this;
+
+        if (typeof oldCarId === 'number') {
+          const points = this.svg
+            .selectAll(`[${idAttributeName}="${oldCarId}"]`)
+            .each(function () {
+              d3.select(this).style('filter', null);
+            });
+        }
+        if (typeof newCarId === 'number') {
+          const points = this.svg
+            .selectAll(`[${idAttributeName}="${newCarId}"]`)
+            .each(function () {
+              d3.select(this)
+                .style(
+                  'filter',
+                  `drop-shadow(0 0 ${
+                    self.data.selected.has(newCarId)
+                      ? pointShadowRadiusPx + selectedStrokeWidthPx
+                      : pointShadowRadiusPx
+                  }px #000000)`
+                )
+                .raise();
+            });
+        }
+      });
 
     this.addDefs();
   }
@@ -185,33 +232,17 @@ export class CarsSvgCharts {
         return colorAxis(d[self.coloredProperty] as any);
       })
       .each(function (datum) {
-        this?.setAttribute(idAttributeName, datum.id.toString());
+        this?.setAttribute(idAttributeName, datum.carId.toString());
       })
       .on('mouseenter', function (event, datum) {
-        d3.select(this).style(
-          'filter',
-          `drop-shadow(0 0 ${
-            self.data.selected.has(getCarId(this))
-              ? pointShadowRadiusPx + selectedStrokeWidthPx
-              : pointShadowRadiusPx
-          }px #000000)`
-        );
+        self.data.setCurrent(datum.carId);
       })
       .on('mouseleave', function (event, datum) {
-        d3.select(this).style('filter', null);
+        self.data.setCurrent(null);
       })
       .on('click', function (event, datum) {
-        const circle = d3.select(this);
-        if (self.data.selected.has(datum.id)) {
-          self.data.unselect(datum.id);
-          circle.attr('stroke', null).attr('stroke-width', null);
-        } else {
-          self.data.select(datum.id);
-          circle
-            .attr('stroke', '#000')
-            .attr('stroke-width', selectedStrokeWidthPx);
-        }
-        console.log(datum);
+        self.data.toggle(datum.carId);
+        console.log(self.data.selected.has(datum.carId), datum);
       });
   }
 
@@ -415,7 +446,6 @@ interface CarLimits {
 }
 
 type YAxisVariable = Exclude<keyof CarLimits, 'x'>;
-type YAxes = Record<YAxisVariable, d3.ScaleLinear<number, number>>;
 
 function getCarLimits() {
   return {
