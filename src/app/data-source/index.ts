@@ -1,5 +1,5 @@
-import { CarModel } from './types';
 import * as Papa from 'papaparse';
+import { CarModel, parseCarCylinderCount } from './types';
 
 export async function loadCarsData(): Promise<CarModel[]> {
   const dataCsv = (await import('../../../data/cars.csv')).default;
@@ -11,7 +11,7 @@ export async function loadCarsData(): Promise<CarModel[]> {
     price: Number.parseInt(r.price),
     manufacturer: r.make,
     fuelType: r['fuel-type'],
-    cylinderCount: r['num-of-cylinders'],
+    cylinderCount: parseCarCylinderCount(r['num-of-cylinders']),
     horsepower: Number.parseInt(r.horsepower),
     cityMpg: Number.parseInt(r['city-mpg']),
     highwayMpg: Number.parseInt(r['highway-mpg']),

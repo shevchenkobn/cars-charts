@@ -42,3 +42,6 @@ There are as many axes tick labels as possible. It is calculated with a 20 pixel
 The chart implementation used adaptability. The document font size is used as font size for the text in charts. Additionally, the implementation takes the window size as the size of the chart. This means that after resizing or zooming and pressing the "Load" button, the chart will be rerendered within the given constraints.
 
 As a result, the implementation turned out to be a general-purpose library for scatter-plot data, that has 3 options as a third coordinate.
+
+# TODO
+- tree-shake RxJs.

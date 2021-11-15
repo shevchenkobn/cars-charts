@@ -1,5 +1,5 @@
 import { GuardedMap, ReadonlyGuardedMap } from '../lib/map';
-import { DeepReadonlyGuardedMap, t } from '../lib/types';
+import { t } from '../lib/types';
 
 export interface DataLoader<T> {
   load(): Promise<T[]>;
@@ -40,7 +40,8 @@ export enum CarManufacturer {
 export namespace carManufacturerMap {
   export const value: ReadonlyArray<CarManufacturer> =
     Object.values(CarManufacturer);
-  export const index: ReadonlyGuardedMap<CarManufacturer, number> = new GuardedMap(value.map((v, i) => t(v, i)));
+  export const index: ReadonlyGuardedMap<CarManufacturer, number> =
+    new GuardedMap(value.map((v, i) => t(v, i)));
   export function getIndex(value: CarManufacturer) {
     return index.get(value);
   }
@@ -54,10 +55,38 @@ export enum CarCylinderCount {
   Six = 6,
   Eight = 8,
   Twelve = 12,
+  NA = Number.NaN,
 }
 
+export function parseCarCylinderCount(value: unknown): CarCylinderCount {
+  const name = String(value);
+  const prop = name[0].toUpperCase() + name.slice(1);
+  return typeof CarCylinderCount[prop as any] === 'number'
+    ? (CarCylinderCount[prop as any] as any)
+    : CarCylinderCount.NA;
+}
+
+export const sortedCarCylinderCounts = Object.values(CarCylinderCount)
+  .filter((a): a is number => typeof a === 'number')
+  .sort((a, b) => {
+    const aNaN = Number.isNaN(a);
+    const bNaN = Number.isNaN(b);
+    if (aNaN && !bNaN) {
+      return -1;
+    }
+    if (!aNaN && bNaN) {
+      return 1;
+    }
+    if (aNaN && bNaN) {
+      return 0;
+    }
+    return a - b;
+  });
+
+export type CarId = number;
+
 export interface CarModel {
-  id: number;
+  id: CarId;
   price: number;
   manufacturer: CarManufacturer;
   fuelType: CarFuelType;

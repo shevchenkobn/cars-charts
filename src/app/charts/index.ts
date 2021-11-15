@@ -1,27 +1,34 @@
 import * as d3 from 'd3';
+import { Subject, takeUntil } from 'rxjs';
+import { ReadonlySelectableDataSource } from '../data-source/data-source.class';
 import {
   CarManufacturer,
   carManufacturerMap,
   CarModel,
+  sortedCarCylinderCounts,
 } from '../data-source/types';
-import { GuardedMap, ReadonlyGuardedMap } from '../lib/map';
-import {
-  DeepReadonly,
-  DeepReadonlyArray,
-  DeepReadonlyGuardedMap,
-} from '../lib/types';
-import { ChartsConfig, ChartsXAxisType } from './types';
 import css from '../index.module.scss';
+import { GuardedMap, ReadonlyGuardedMap } from '../lib/map';
+import { DeepReadonly, DeepReadonlyGuardedMap, Maybe } from '../lib/types';
+import { ChartsConfig, ChartsXAxisType, ColorCodedProperty } from './types';
 
 const colors = {
   primary: String(css.primaryColor),
   secondary: String(css.secondaryColor),
 };
 
-const font = 'sans-serif';
+const idAttributeName = 'data-id';
+const paddingPx = 15;
+const pointRadiusPx = 4;
+const selectedStrokeWidthPx = 2;
+const pointShadowRadiusPx = 6;
+const labelSizePx = 12;
+const labelMarginPx = 5;
+const font = labelSizePx + 'px sans-serif';
+
+const dropShadowId = 'dropshadow';
 const xIntervalPx = 20;
 const yIntervalPx = 10;
-const paddingPx = 20;
 const axisWidthPx = 2;
 const tickLengthPx = 4;
 const pointSizePx = 6;
@@ -54,11 +61,12 @@ export class CarsSvgCharts {
     any,
     null
   >;
-  private readonly xAxisType: ChartsXAxisType;
+  private xAxisType: ChartsXAxisType;
+  private coloredProperty: ColorCodedProperty = 'cylinderCount';
   private size: Coordinates = { x: 0, y: 0 };
   private limits: CarLimits = getCarLimits();
-  private data: DeepReadonlyArray<CarModel> = [];
-  private selected: GuardedMap<number, DeepReadonly<CarModel>> = new GuardedMap();
+  private data: ReadonlySelectableDataSource;
+  private readonly destroy$ = new Subject<boolean>();
 
   constructor(config: ChartsConfig) {
     const container = d3.select(config.container) as d3.Selection<
@@ -82,12 +90,15 @@ export class CarsSvgCharts {
       >;
     }
     this.xAxisType = config.xAxisType;
+    this.data = config.dataSource;
+    this.data.changed$.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.render();
+    });
+
+    this.addDefs();
   }
 
-  render(data?: DeepReadonlyArray<CarModel>) {
-    if (data) {
-      this.data = data;
-    }
+  render() {
     this.clear();
 
     this.updateChartsSize();
@@ -98,58 +109,137 @@ export class CarsSvgCharts {
     const xAxisHeight = this.getXAxisHeight();
     const yAxesWidth = this.getYAxesMaxWidth();
     const xAxis = this.getXAxis([
-      paddingPx + yAxesWidth,
+      paddingPx + yAxesWidth + labelMarginPx + labelSizePx,
       this.size.x - paddingPx,
     ]);
     const xAxisRenderer = d3.axisBottom(xAxis);
-    this.renderXAxis(xAxisRenderer, this.size.y - paddingPx - xAxisHeight);
 
-    const yAxes: YAxes = {
-      horsepower: this.getYAxis('horsepower', [
-        this.size.y - paddingPx - xAxisHeight,
-        paddingPx,
-      ]),
-      cityMpg: this.getYAxis('cityMpg', [
-        this.size.y - paddingPx - xAxisHeight,
-        paddingPx,
-      ]),
-      highwayMpg: this.getYAxis('highwayMpg', [
-        this.size.y - paddingPx - xAxisHeight,
-        paddingPx,
-      ]),
-    };
-    const yAxisRender = d3.axisLeft(yAxes.horsepower);
-    this.renderYAxis(yAxisRender, paddingPx + yAxesWidth);
+    const colorAxis = d3
+      .scaleLinear<string, string>()
+      .domain([1, sortedCarCylinderCounts.length])
+      .range([colors.secondary, colors.primary]);
 
+    const yProps = ['horsepower', 'cityMpg', 'highwayMpg'] as YAxisVariable[];
+    const yChartSize =
+      (this.size.y - paddingPx) / yProps.length - paddingPx - xAxisHeight;
+    for (let i = 0; i < yProps.length; i += 1) {
+      const yKey = yProps[i];
+      const yTop = paddingPx + (yChartSize + xAxisHeight + paddingPx) * i;
+
+      const yAxis = this.getYAxis(yKey, [yTop + yChartSize, yTop]);
+      const yAxisRender = d3.axisLeft(yAxis);
+
+      this.renderXAxis(xAxisRenderer, yTop + yChartSize);
+      this.renderYAxis(
+        yAxisRender,
+        paddingPx + yAxesWidth + labelMarginPx + labelSizePx
+      );
+
+      this.renderYText(yKey, paddingPx, yTop + yChartSize / 2);
+
+      this.renderScatterPlot<'cylinderCount'>(yKey, xAxis, yAxis, function (v) {
+        return colorAxis(sortedCarCylinderCounts.indexOf(v));
+      });
+    }
+    //
+    // setTimeout(() => {
+    //   const data = this.data.array[66];
+    //   this.data.select(data.id);
+    // }, 2500);
+  }
+
+  clear() {
+    this.svg.selectAll('*:not(defs)').remove();
+  }
+
+  disconnect() {
+    this.destroy$.next(true);
+    this.destroy$.complete();
+  }
+
+  private renderScatterPlot<K extends ColorCodedProperty>(
+    yKey: YAxisVariable,
+    xAxis: (x: number) => number,
+    yAxis: (y: number) => number,
+    colorAxis: (z: CarModel[K]) => string
+  ) {
+    const xKey = this.getXKeyTransformer();
+
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
 
-    this.svg
+    return this.svg
       .append('g')
       .selectAll()
-      .data(this.data)
+      .data(this.data.array)
       .join('circle')
+      .style('cursor', 'pointer')
       .attr('cx', function (d) {
         return xAxis(xKey.toNumber(d[xKey.key]) || 0);
       })
       .attr('cy', function (d) {
-        return yAxes.horsepower(d.horsepower || 0);
+        return yAxis(d[yKey] || 0);
       })
-      .attr('r', 3)
-      .style('fill', '#69b3a2')
+      .attr('r', pointRadiusPx)
+      .style('fill', function (d) {
+        return colorAxis(d[self.coloredProperty] as any);
+      })
+      .each(function (datum) {
+        this?.setAttribute(idAttributeName, datum.id.toString());
+      })
+      .on('mouseenter', function (event, datum) {
+        d3.select(this).style(
+          'filter',
+          `drop-shadow(0 0 ${
+            self.data.selected.has(getCarId(this))
+              ? pointShadowRadiusPx + selectedStrokeWidthPx
+              : pointShadowRadiusPx
+          }px #000000)`
+        );
+      })
+      .on('mouseleave', function (event, datum) {
+        d3.select(this).style('filter', null);
+      })
       .on('click', function (event, datum) {
         const circle = d3.select(this);
-        if (self.selected.has(datum.id)) {
-          self.selected.delete(datum.id);
+        if (self.data.selected.has(datum.id)) {
+          self.data.unselect(datum.id);
           circle.attr('stroke', null).attr('stroke-width', null);
         } else {
-          self.selected.set(datum.id, datum);
-          circle.attr('stroke', '#000').attr('stroke-width', 2);
+          self.data.select(datum.id);
+          circle
+            .attr('stroke', '#000')
+            .attr('stroke-width', selectedStrokeWidthPx);
         }
+        console.log(datum);
       });
   }
 
-  clear() {
-    this.svg.selectAll('*').remove();
+  private addDefs() {
+    const defs = this.svg.append('defs');
+    // var dropShadowFilter = defs.append('svg:filter')
+    //   .attr('id', 'drop-shadow')
+    //   .attr('filterUnits', "userSpaceOnUse")
+    //   .attr('width', '250%')
+    //   .attr('height', '250%');
+    // dropShadowFilter.append('svg:feGaussianBlur')
+    //   .attr('in', 'SourceGraphic')
+    //   .attr('stdDeviation', 2)
+    //   .attr('result', 'blur-out');
+    // dropShadowFilter.append('svg:feColorMatrix')
+    //   .attr('in', 'blur-out')
+    //   .attr('type', 'hueRotate')
+    //   .attr('values', 180)
+    //   .attr('result', 'color-out');
+    // dropShadowFilter.append('svg:feOffset')
+    //   .attr('in', 'color-out')
+    //   .attr('dx', 3)
+    //   .attr('dy', 3)
+    //   .attr('result', 'the-shadow');
+    // dropShadowFilter.append('svg:feBlend')
+    //   .attr('in', 'SourceGraphic')
+    //   .attr('in2', 'the-shadow')
+    //   .attr('mode', 'normal');
   }
 
   private updateChartsSize() {
@@ -167,7 +257,7 @@ export class CarsSvgCharts {
   private updateLimits(): CarLimits {
     this.limits = getCarLimits();
     const xTransformer = this.getXKeyTransformer();
-    for (const datum of this.data) {
+    for (const datum of this.data.array) {
       const x = xTransformer.toNumber(datum[xTransformer.key]);
       if (x < this.limits.x.min) {
         this.limits.x.min = x;
@@ -201,7 +291,8 @@ export class CarsSvgCharts {
     xAxis: d3.ScaleLinear<number, number> = this.getXAxis()
   ) {
     const xAxisRenderer = d3.axisBottom(xAxis);
-    const xAxisBoundingClientRect = this.getBoundingClientRect(xAxisRenderer);
+    const xAxisBoundingClientRect =
+      this.getAxisBoundingClientRect(xAxisRenderer);
     return xAxisBoundingClientRect.height;
   }
 
@@ -214,7 +305,8 @@ export class CarsSvgCharts {
     let maxWidth = 0;
     for (const [variable, yAxis] of Object.entries(yAxes)) {
       const yAxisRenderer = d3.axisLeft(yAxis);
-      const yAxisBoundingClientRect = this.getBoundingClientRect(yAxisRenderer);
+      const yAxisBoundingClientRect =
+        this.getAxisBoundingClientRect(yAxisRenderer);
       maxWidth = Math.max(maxWidth, yAxisBoundingClientRect.width);
     }
     return maxWidth;
@@ -264,7 +356,20 @@ export class CarsSvgCharts {
       .call(yAxisRenderer);
   }
 
-  private getBoundingClientRect(
+  private renderYText(text: string, x: number, y: number) {
+    return this.svg
+      .append('text')
+      .style('font', font)
+      .attr('text-anchor', 'middle')
+      .attr('x', x)
+      .attr('y', y)
+      .attr('dx', 0)
+      .attr('dy', labelSizePx)
+      .attr('transform', `rotate(-90 ${x} ${y})`)
+      .text(text);
+  }
+
+  private getAxisBoundingClientRect(
     func: Parameters<
       d3.Selection<SVGGElement, DeepReadonly<CarModel>, any, null>['call']
     >[0]
@@ -280,9 +385,26 @@ export class CarsSvgCharts {
     return boundingRect;
   }
 
+  private getTextBoundingClientRect(text: string) {
+    const t = this.svg.append('text').style('font', font).text(text);
+    const boundingRect = t.node()?.getBoundingClientRect();
+    if (!boundingRect) {
+      throw new Error(
+        'Unknown error while getting size, maybe rendering failed'
+      );
+    }
+    t.remove();
+    return boundingRect;
+  }
+
   private getXKeyTransformer(): XKeyTransformer {
     return enumToKey.get(this.xAxisType);
   }
+}
+
+function getCarId(point: Maybe<SVGCircleElement>) {
+  const attribute = point?.getAttribute(idAttributeName);
+  return Number.parseInt(attribute ?? '');
 }
 
 interface CarLimits {

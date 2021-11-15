@@ -4,6 +4,7 @@ import { ChartsXAxisType } from './charts/types';
 import { loadCarsData } from './data-source';
 import { CsvHtmlDataLoader } from './data-source/csv-data-loader.class';
 import { DataReader } from './data-source/data-reader.class';
+import { DataSource } from './data-source/data-source.class';
 import { GuardedMap } from './lib/map';
 import { OptionLabelHandler } from './lib/option-label-handler.class';
 import { CsvNumber, DataPoint } from './lib/types';
@@ -19,12 +20,13 @@ const initialKey = CsvNumber.First;
 const initialRefreshEnabled = false;
 
 async function main() {
-  const sourceData = await loadCarsData();
+  const dataSource = new DataSource().setData(await loadCarsData());
   const charts = new CarsSvgCharts({
+    dataSource,
     container: document.querySelector('.app-chart')!,
     xAxisType: ChartsXAxisType.Prices,
+    coloredProperty: 'cylinderCount',
   });
-  charts.render(sourceData);
   // setInterval(() => {
   //   charts.render();
   // }, 1000);
