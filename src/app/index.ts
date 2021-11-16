@@ -6,7 +6,7 @@ import { DataSource } from './data-source/data-source.class';
 import { UiController } from './ui-controller.class';
 
 const defaultXAxisType = ChartsXAxisType.Manufacturers;
-const defaultColorCodedProperty: ColorCodedProperty = 'cylinderCount';
+const defaultColorCodedProperty: ColorCodedProperty = 'fuelType';
 
 async function main() {
   const chartsContainer = document.querySelector('.app-chart');
@@ -27,6 +27,8 @@ async function main() {
     selectors: {
       renderButton: '.app-ui-render',
       xAxisType: '.app-ui-x-selector',
+      colorCodedKey: '.app-ui-colored-selector',
+      table: '.app-data-table',
     },
     xAxisType: defaultXAxisType,
     colorCodedProperty: defaultColorCodedProperty,
@@ -38,8 +40,15 @@ async function main() {
         xAxisType,
       });
     },
+    onColorCodedPropertyChange(property: ColorCodedProperty) {
+      charts.render({
+        colorCodedProperty: property,
+      });
+    },
+    dataSource,
   });
   uiController.init();
+  charts.render();
 }
 
 main().catch((error) => {

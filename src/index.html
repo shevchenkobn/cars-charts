@@ -29,6 +29,21 @@
       <div class="col s4">
         <h4>Color coded:</h4>
         <div class="app-color-legend"></div>
+        <div>
+          <div>
+            <label for="radioXColorCodedCylinders">
+              <input type="radio" class="app-ui-colored-selector" id="radioXColorCodedCylinders" name="radioXColorCoded" value="cylinderCount">
+              <span>Cylinder Count</span>
+            </label>
+          </div>
+
+          <div>
+            <label for="radioXColorCodedFuelType">
+              <input type="radio" class="app-ui-colored-selector" id="radioXColorCodedFuelType" name="radioXColorCoded" value="fuelType">
+              <span>Fuel Type</span>
+            </label>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -36,13 +51,12 @@
       <div class="divider mb-1"></div>
       <a class="waves-effect waves-light btn app-ui-render">Render</a>
       <div><small>This button also resizes the charts for current window screen and browser zoom.</small></div>
+      <div><small>At the bottom of the page there is a table of selected data points.</small></div>
     </div>
-<!--    <div class="col">-->
-<!--      <input type="checkbox" id="refreshDataCsv" class="app-ui-refresh"/>-->
-<!--      <label for="refreshDataCsv">Reload from server</label><br>-->
-<!--      <button class="app-ui-load">Load</button>-->
-<!--    </div>-->
   </div>
   <div class="app-chart"></div>
+  <div>
+    <table class="highlight app-data-table"></table>
+  </div>
 </body>
 </html>

@@ -42,7 +42,7 @@ export class DataSource implements ReadonlyInteractiveDataSource {
   private data: DeepReadonlyArray<CarModel> = [];
   private dataMap: DeepReadonlyGuardedMap<CarId, CarModel> = new Map();
   private selectedSet: Set<CarId> = new Set();
-  private changedSubject = new BehaviorSubject<this>(this);
+  private changedSubject = new Subject<this>();
   readonly changed$ = this.changedSubject.asObservable();
   private selectedSubject: Subject<CarIdSelectEvent<DataSource>> = new Subject<
     CarIdSelectEvent<DataSource>

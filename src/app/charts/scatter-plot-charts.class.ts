@@ -2,6 +2,7 @@ import * as d3 from 'd3';
 import { Subject, takeUntil } from 'rxjs';
 import { ReadonlyInteractiveDataSource } from '../data-source/data-source.class';
 import {
+  carFuelTypes,
   CarManufacturer,
   carManufacturerMap,
   CarModel,
@@ -33,7 +34,7 @@ const labelSizePx = 12;
 const labelMarginPx = 5;
 const font = labelSizePx + 'px sans-serif';
 
-const enumToKey: ReadonlyGuardedMap<ChartsXAxisType, XKeyTransformer> =
+const xAxisTypeToKey: ReadonlyGuardedMap<ChartsXAxisType, XKeyTransformer> =
   new GuardedMap([
     [
       ChartsXAxisType.Prices,
@@ -48,6 +49,12 @@ const enumToKey: ReadonlyGuardedMap<ChartsXAxisType, XKeyTransformer> =
       },
     ],
   ] as [ChartsXAxisType, XKeyTransformer][]);
+
+type ColorValueGetter = (value: number) => string;
+const colorCodedValueGetters: Record<ColorCodedProperty, ColorValueGetter> = {
+  cylinderCount: (value) => sortedCarCylinderCounts[value].toString(),
+  fuelType: (value: number) => carFuelTypes[value].toString(),
+};
 
 interface XKeyTransformer<K extends keyof CarModel = keyof CarModel> {
   key: K;
@@ -65,7 +72,7 @@ export class CarsSvgCharts {
     d3.Selection<SVGSVGElement, number | string, any, null | undefined>
   >;
   private xAxisType: ChartsXAxisType;
-  private coloredProperty: ColorCodedProperty = 'cylinderCount';
+  private coloredProperty: ColorCodedProperty;
   private size: Coordinates = { x: 0, y: 0 };
   private limits: CarLimits = getCarLimits();
   private data: ReadonlyInteractiveDataSource;
@@ -104,6 +111,7 @@ export class CarsSvgCharts {
       this.colorCodedLegendSvg = null;
     }
     this.xAxisType = config.xAxisType;
+    this.coloredProperty = config.colorCodedProperty;
     this.data = config.dataSource;
     this.data.changed$.pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.render();
@@ -129,7 +137,7 @@ export class CarsSvgCharts {
             this.colorCodedLegendSvg
               .select(
                 `[${valueAttributeName}="${
-                  self.data.map.get(oldCarId).cylinderCount
+                  self.data.map.get(oldCarId)[this.coloredProperty]
                 }"]`
               )
               .attr('stroke-width', colorLegendStrokePx);
@@ -154,7 +162,7 @@ export class CarsSvgCharts {
             this.colorCodedLegendSvg
               .select(
                 `[${valueAttributeName}="${
-                  self.data.map.get(newCarId).cylinderCount
+                  self.data.map.get(newCarId)[this.coloredProperty]
                 }"]`
               )
               .attr('stroke-width', selectedStrokeWidthPx * 2);
@@ -187,13 +195,17 @@ export class CarsSvgCharts {
         .ticks(carManufacturerMap.value.length);
     }
 
-    const colorAxis = d3
-      .scaleLinear<string, string>()
-      .domain([1, sortedCarCylinderCounts.length])
-      .range([colors.secondary, colors.primary]);
-    this.renderColorCodedLegend(colorAxis, (v) =>
-      sortedCarCylinderCounts[v].toString()
-    );
+    const colorAxis =
+      this.coloredProperty === 'cylinderCount'
+        ? d3
+            .scaleLinear<string, string>()
+            .domain([1, sortedCarCylinderCounts.length - 1])
+            .range([colors.secondary, colors.primary])
+        : d3
+            .scaleLinear<string, string>()
+            .domain([0, carFuelTypes.length - 1])
+            .range([colors.secondary, colors.primary]);
+    this.renderColorCodedLegend(colorAxis);
 
     const yProps = ['horsepower', 'cityMpg', 'highwayMpg'] as YAxisVariable[];
     const yChartSize =
@@ -213,9 +225,18 @@ export class CarsSvgCharts {
 
       this.renderYText(yKey, paddingPx, yTop + yChartSize / 2);
 
-      this.renderScatterPlot<'cylinderCount'>(yKey, xAxis, yAxis, function (v) {
-        return colorAxis(sortedCarCylinderCounts.indexOf(v));
-      });
+      this.renderScatterPlot(
+        yKey,
+        xAxis,
+        yAxis,
+        this.coloredProperty === 'cylinderCount'
+          ? function (v) {
+              return colorAxis(sortedCarCylinderCounts.indexOf(v as any));
+            }
+          : function (v) {
+              return colorAxis(carFuelTypes.indexOf(v as any));
+            }
+      );
     }
 
     for (const carId of this.data.selected) {
@@ -235,10 +256,7 @@ export class CarsSvgCharts {
     this.destroy$.complete();
   }
 
-  private renderColorCodedLegend(
-    axis: d3.ScaleLinear<string, string>,
-    getValue: (value: number) => string
-  ) {
+  private renderColorCodedLegend(axis: d3.ScaleLinear<string, string>) {
     const svg = this.colorCodedLegendSvg;
     if (!svg) {
       return;
@@ -247,12 +265,12 @@ export class CarsSvgCharts {
     const values = [
       ...(domain[0] < domain[1]
         ? function* () {
-            for (let i = domain[0]; i < domain[1]; i += 1) {
+            for (let i = domain[0]; i <= domain[1]; i += 1) {
               yield i;
             }
           }
         : function* () {
-            for (let i = domain[0]; i > domain[1]; i -= 1) {
+            for (let i = domain[0]; i >= domain[1]; i -= 1) {
               yield i;
             }
           })(),
@@ -267,6 +285,9 @@ export class CarsSvgCharts {
       width: size.width / values.length,
       height: size.height / 2,
     };
+
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const self = this;
     svg
       .attr('width', size.width)
       .attr('height', size.height)
@@ -276,7 +297,7 @@ export class CarsSvgCharts {
       .each(function (v, i) {
         const g = d3.select(this);
         const x = rectSize.width * i;
-        const value = getValue(v);
+        const value = colorCodedValueGetters[self.coloredProperty](v);
 
         g.append('rect')
           .attr('x', x)
@@ -498,7 +519,7 @@ export class CarsSvgCharts {
   }
 
   private getXKeyTransformer(): XKeyTransformer {
-    return enumToKey.get(this.xAxisType);
+    return xAxisTypeToKey.get(this.xAxisType);
   }
 
   private markSelectedPoints(carId: number, selected: boolean) {

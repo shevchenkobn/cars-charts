@@ -1,5 +1,5 @@
 import { GuardedMap, ReadonlyGuardedMap } from '../lib/map';
-import { t } from '../lib/types';
+import { DeepReadonlyArray, t } from '../lib/types';
 
 export interface DataLoader<T> {
   load(): Promise<T[]>;
@@ -10,6 +10,9 @@ export enum CarFuelType {
   Diesel = 'diesel',
   Gas = 'gas',
 }
+
+export const carFuelTypes: DeepReadonlyArray<CarFuelType> =
+  Object.values(CarFuelType);
 
 export enum CarManufacturer {
   AlfaRomero = 'alfa-romero',
@@ -46,8 +49,6 @@ export namespace carManufacturerMap {
     return index.get(value);
   }
 }
-
-console.log(carManufacturerMap.value);
 
 export enum CarCylinderCount {
   Two = 2,
