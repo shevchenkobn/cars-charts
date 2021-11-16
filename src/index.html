@@ -5,23 +5,33 @@
   <title>Cars Charts</title>
 </head>
 <body>
+  <h1 class="text-center">Car Analytics</h1>
   <div class="section ph-1">
-    <h4>Data Selector:</h4>
-    <div>
-      <div>
-        <label for="radioXAxisPrices">
-          <input type="radio" class="app-ui-selector" id="radioXAxisPrices" name="radioXAxis" value="prices">
-          <span>Prices</span>
-        </label>
-      </div>
+    <div class="row">
+      <div class="col s4">
+        <h4>X axis:</h4>
+        <div>
+          <div>
+            <label for="radioXAxisPrices">
+              <input type="radio" class="app-ui-x-selector" id="radioXAxisPrices" name="radioXAxis" value="prices">
+              <span>Prices</span>
+            </label>
+          </div>
 
-      <div>
-        <label for="radioXAxisManufacturers">
-          <input type="radio" class="app-ui-selector" id="radioXAxisManufacturers" name="radioXAxis" value="manufacturers">
-          <span>Manufacturers</span>
-        </label>
+          <div>
+            <label for="radioXAxisManufacturers">
+              <input type="radio" class="app-ui-x-selector" id="radioXAxisManufacturers" name="radioXAxis" value="manufacturers">
+              <span>Manufacturers</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="col s4">
+        <h4>Color coded:</h4>
+        <div class="app-color-legend"></div>
       </div>
     </div>
+
     <div class="section">
       <div class="divider mb-1"></div>
       <a class="waves-effect waves-light btn app-ui-render">Render</a>

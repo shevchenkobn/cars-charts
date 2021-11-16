@@ -47,6 +47,8 @@ export namespace carManufacturerMap {
   }
 }
 
+console.log(carManufacturerMap.value);
+
 export enum CarCylinderCount {
   Two = 2,
   Three = 3,
@@ -86,7 +88,7 @@ export const sortedCarCylinderCounts = Object.values(CarCylinderCount)
 export type CarId = number;
 
 export interface CarModel {
-  id: CarId;
+  carId: CarId;
   price: number;
   manufacturer: CarManufacturer;
   fuelType: CarFuelType;

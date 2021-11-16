@@ -109,15 +109,6 @@ export type With<K extends keyof any, T = any> = T extends Record<K, infer V>
 //   return key in obj;
 // }
 
-export interface DataPoint {
-  x: number;
-  y: number;
-  /**
-   * An integer.
-   */
-  option: number;
-}
-
 export enum CsvNumber {
   First = 'data1',
   Second = 'data2',

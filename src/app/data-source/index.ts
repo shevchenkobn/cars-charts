@@ -7,7 +7,7 @@ export async function loadCarsData(): Promise<CarModel[]> {
     header: true,
   });
   return parsed.data.map((r: any, i) => ({
-    id: i,
+    carId: i,
     price: Number.parseInt(r.price),
     manufacturer: r.make,
     fuelType: r['fuel-type'],
