@@ -90,4 +90,4 @@ fabric.properties
 ### Custom
 
 node_modules/
-dist/.temp.bundle.js
+dist/*.temp.bundle.js

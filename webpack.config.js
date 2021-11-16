@@ -18,7 +18,7 @@ module.exports = {
       },
       {
         test: /\.csv$/,
-        use: 'raw-loader'
+        type: 'asset/source'
       },
       {
         test: new RegExp(cssExt, 'i'),

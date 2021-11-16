@@ -8,7 +8,7 @@ const path = require('path');
 
 config.plugins.push(
   // Inlines chunks with `runtime` in the name
-  new InlineChunkHtmlPlugin(HtmlWebpackPlugin, [inlineBundleRegex]),
+  new InlineChunkHtmlPlugin(HtmlWebpackPlugin, [inlineBundleRegex, /\.csv$/i]),
   new RemovePlugin({
     after: {
       include: [

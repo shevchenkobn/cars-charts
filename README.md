@@ -14,7 +14,7 @@ npm i
 npm run build
 ```
 
-The project **doesn't** have any runtime dependencies.
+The project uses D3 and a set of helper libraries.
 
 However, it uses WebPack, TypeScript for building from the sources. For code linting _eslint_ with _prettier_ is used.
 
@@ -29,19 +29,35 @@ This will start a watcher for files with auto reload.
 
 # Description
 
-The project provides a native canvas implementation for 2D scatter charts with an enum-like option.
-There are two different CSV files that are separately visualised.
-Both files have X and Y. For the first file there are 3 possible options `['a', 'b', 'c']`, for the second - `['bar', 'baz', 'foo']`. The options are marked with red (`#ff0000`), blue (`#0000ff`), and green (`#00ff00`).
+
 
 ## Chart implementation aspects
 
-The chart is a normal Cartesian coordinate system, meaning that the relation of the X and Y axis is 1:1.
+The chart implementation used adaptability. The implementation takes the window size as the size of the chart. This means that after resizing or zooming and pressing the "Render" button, the chart will be rerendered within the given constraints.
 
-There are as many axes tick labels as possible. It is calculated with a 20 pixel spacing for X-axis and 10 pixels for Y-axis. This allows easier checking for the point coordinates.
+The project renders 3 scatter plots with common X axes for easier checking.
 
-The chart implementation used adaptability. The document font size is used as font size for the text in charts. Additionally, the implementation takes the window size as the size of the chart. This means that after resizing or zooming and pressing the "Load" button, the chart will be rerendered within the given constraints.
+As an X-axis 2 properties can be used:
+- Price;
+- Manufacturer;
 
-As a result, the implementation turned out to be a general-purpose library for scatter-plot data, that has 3 options as a third coordinate.
+As Y-axis data 3 properties are used:
+- Horsepower;
+- City MPG;
+- Highway MPG;
+
+As a color (third dimension) can show 2 properties:
+- Cylinder count;
+- Fuel type;
+
+The connection between the points is done this way:
+- when the point has hovered over, the point is highlighted in all 3 charts as well as the color scale of cylinder count or fuel type;
+- when the point is clicked it is highlighted, the point is highlighted in all 3 charts and is shown in the table.
+
+The missing values are shown on the axes in charts and with "-" in the table.
+
+While switching between the 4 axes, there can be seen interesting correlations between the parameters.
 
 # TODO
 - tree-shake RxJs.
+- format better labels.
